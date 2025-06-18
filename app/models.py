@@ -121,6 +121,13 @@ class Book(db.Model):
         # If you have other fields, set them here or with kwargs
 
     def save(self):
+        if type(self.categories) is str:
+            cat_set = set()
+            cat_set.update([cat.strip().title() for cat in self.categories.split(',')])
+            print(type(self), self)
+            print(type(self.categories),self.categories)
+            self.categories=", ".join(map(str, cat_set))
+            print(type(self.categories),self.categories)
         db.session.add(self)
         db.session.commit()
 

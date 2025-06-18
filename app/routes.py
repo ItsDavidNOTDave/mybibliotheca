@@ -300,26 +300,33 @@ def search_books():
 @bp.route('/library')
 def library():
     # Get filter parameters from URL
-    category_filter = request.args.get('category', '')
-    publisher_filter = request.args.get('publisher', '')
-    language_filter = request.args.get('language', '')
+    category_filter = request.args.getlist('category')
+    publisher_filter = request.args.getlist('publisher')
+    language_filter = request.args.getlist('language')
     search_query = request.args.get('search', '')
+    has_read_query = request.args.get('has_read','')
     
     books_query = Book.query
     
     # Apply filters
     if category_filter:
-        books_query = books_query.filter(Book.categories.contains(category_filter))
+        for category_filter_item in category_filter:
+            books_query = books_query.filter(Book.categories.op('REGEXP')(f'(?:(?<=^)|(?<=,\s)){category_filter_item}(?:(?=$|,))'))
+
     if publisher_filter:
-        books_query = books_query.filter(Book.publisher.ilike(f'%{publisher_filter}%'))
+        for publisher_filter_item in publisher_filter:
+            books_query = books_query.filter(Book.publisher.ilike(f'%{publisher_filter_item}%'))
     if language_filter:
-        books_query = books_query.filter(Book.language == language_filter)
+        for language_filter_item in language_filter:
+            books_query = books_query.filter(Book.language == language_filter_item)
     if search_query:
         books_query = books_query.filter(
             (Book.title.ilike(f'%{search_query}%')) |
             (Book.author.ilike(f'%{search_query}%')) |
             (Book.description.ilike(f'%{search_query}%'))
         )
+    if has_read_query:
+        books_query = books_query.filter(Book.finish_date.is_not(None))
     
     books = books_query.all()
     
@@ -328,7 +335,7 @@ def library():
     categories = set()
     publishers = set()
     languages = set()
-    
+
     for book in all_books:
         if book.categories:
             categories.update([cat.strip() for cat in book.categories.split(',')])
@@ -343,10 +350,11 @@ def library():
         categories=sorted(categories),
         publishers=sorted(publishers),
         languages=sorted(languages),
-        current_category=category_filter,
-        current_publisher=publisher_filter,
-        current_language=language_filter,
-        current_search=search_query
+        current_category=set(category_filter),
+        current_publisher=set(publisher_filter),
+        current_language=set(language_filter),
+        current_search=search_query,
+        has_read=has_read_query
     )
 
 @bp.route('/public-library')
@@ -389,7 +397,15 @@ def edit_book(uid):
         book.page_count = int(request.form.get('page_count')) if request.form.get('page_count', '').strip() else None
         book.publisher = request.form.get('publisher', '').strip() or None
         book.language = request.form.get('language', '').strip() or None
-        book.categories = request.form.get('categories', '').strip() or None
+        category_input = request.form.get('categories', '')
+        if len(category_input)>0:
+            cat_set = set()
+            cat_set.update([cat.strip().title() for cat in request.form.get('categories', '').split(",")])
+            book.categories = ", ".join(map(str, cat_set))
+        else:
+            book.categories = ""
+
+#        book.categories = request.form.get('categories', '').strip() or None
         book.average_rating = float(request.form.get('average_rating')) if request.form.get('average_rating', '').strip() else None
         book.rating_count = int(request.form.get('rating_count')) if request.form.get('rating_count', '').strip() else None
         db.session.commit()

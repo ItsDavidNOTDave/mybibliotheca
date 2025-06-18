@@ -66,10 +66,9 @@
 </style>
 
 <h1 class="mb-4">All Books in My Library</h1>
-
 <!-- Filter Section -->
 <div class="filter-section">
-  <form method="GET" class="row g-3 w-100">
+  <form method="GET" class="row g-3 w-100" id="filter_form">
     <div class="col-md-3">
       <label for="search" class="form-label">Search</label>
       <input type="text" class="form-control" id="search" name="search" 
@@ -77,10 +76,10 @@
     </div>
     <div class="col-12 col-sm-6 col-lg-3">
       <label for="category" class="form-label">Category</label>
-      <select class="form-select" id="category" name="category">
+      <select class="form-select" id="category" name="category" multiple>
         <option value="">All Categories</option>
         {% for category in categories %}
-          <option value="{{ category }}" {% if category == current_category %}selected{% endif %}>
+          <option value="{{ category }}" {% if category in current_category %}selected{% endif %}>
             {{ category }}
           </option>
         {% endfor %}
@@ -88,10 +87,10 @@
     </div>
     <div class="col-12 col-sm-6 col-lg-3">
       <label for="publisher" class="form-label">Publisher</label>
-      <select class="form-select" id="publisher" name="publisher">
+      <select class="form-select" id="publisher" name="publisher" multiple>
         <option value="">All Publishers</option>
         {% for publisher in publishers %}
-          <option value="{{ publisher }}" {% if publisher == current_publisher %}selected{% endif %}>
+          <option value="{{ publisher }}" {% if publisher in current_publisher %}selected{% endif %}>
             {{ publisher }}
           </option>
         {% endfor %}
@@ -99,18 +98,22 @@
     </div>
     <div class="col-12 col-sm-6 col-lg-2">
       <label for="language" class="form-label">Language</label>
-      <select class="form-select" id="language" name="language">
+      <select class="form-select" id="language" name="language" multiple>
         <option value="">All Languages</option>
         {% for language in languages %}
-          <option value="{{ language }}" {% if language == current_language %}selected{% endif %}>
+          <option value="{{ language }}" {% if language in current_language %}selected{% endif %}>
             {{ language }}
           </option>
         {% endfor %}
       </select>
     </div>
+    <div class="col-12 col-sm-6 col-lg-2">
+      <label for="has_read" class="form-label">Finished?</label>
+      <input type="checkbox" class="form-input" id="has_read" name="has_read" {% if has_read == "on" %}checked{% endif %} />
+    </div>
   </form>
   <div class="mt-2 text-center w-100">
-    <button type="submit" class="btn btn-primary btn-sm me-2">Filter</button> <!-- Blue Filter Button -->
+    <button type="submit" class="btn btn-primary btn-sm me-2" form="filter_form">Filter</button> <!-- Blue Filter Button -->
     <a href="{{ url_for('main.library') }}" class="btn btn-secondary btn-sm">Clear Filters</a> <!-- Gray Clear Filters Button -->
     <span class="ms-3 text-muted">Showing {{ books|length }} book(s)</span>
   </div>
