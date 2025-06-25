@@ -14,11 +14,11 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     margin: 12px;
-    /* width: 180px; */ /* Removed for Bootstrap grid */
-    /* display: flex; */ /* Removed for Bootstrap grid */
-    /* flex-direction: column; */ /* Removed for Bootstrap grid */
-    /* align-items: center; */ /* Handled by Bootstrap card/grid or utilities */
-    height: 100%; /* Added for consistent card height in a row */
+    /* width: 180px; /* Removed for Bootstrap grid */
+    /* display: flex; /* Removed for Bootstrap grid */
+    /* flex-direction: column; /* Removed for Bootstrap grid */
+    /* align-items: center; /* Handled by Bootstrap card/grid or utilities */
+    /* height: 100%; /* Added for consistent card height in a row */
     transition: transform 0.1s;
   }
   .book-card:hover {
@@ -32,12 +32,13 @@
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.10);
     background: #eee;
+    max-width: 100%
   }
   .bookshelf-row {
-    /* display: flex; */ /* Removed for Bootstrap grid */
-    /* flex-wrap: wrap; */ /* Removed for Bootstrap grid */
-    /* justify-content: flex-start; */ /* Handled by Bootstrap grid */
-    /* align-items: flex-end; */ /* Handled by Bootstrap grid, default is stretch */
+    /* display: flex; /* Removed for Bootstrap grid */
+    /* flex-wrap: wrap; /* Removed for Bootstrap grid */
+    /* justify-content: flex-start; /* Handled by Bootstrap grid */
+    /* align-items: flex-start; /*end; */ /* Handled by Bootstrap grid, default is stretch */
     min-height: 200px;
   }
   .book-title {
@@ -63,102 +64,265 @@
     margin-bottom: 20px;
     border: 1px solid #e0c9a6;
   }
+  .bulk-edit-section {
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #e0c9a6;
+  }
+
+  .bulk_edit_label {
+    height: 100%;
+  }
+
+  .bulk_edit_checkbox{
+    margin: 0 50%;
+  }
+
+ /* Begin new Select box */ 
+ 
+.selected_option {
+	background-color: beige;
+	border-radius: 10px;
+	padding: 5px;
+	display: inline-block;
+	margin: 2px;
+}
+.selected_option span {
+	color: red;
+	cursor: pointer;
+}
+.hidden_class {
+	display: none !important;
+}
+.div_select{
+	width: fit-content;
+	max-width: 300px;
+}
+.div_checkboxes {
+  border: 1px #dadada solid;
+  max-height: 100px;
+  overflow: auto;
+}
+.div_checkboxes label {
+  display: block;
+}
+.div_checkboxes label:hover {
+  background-color: #1e90ff;
+}
+/* End new Selection Box Styles*/
 </style>
+<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+
 
 <h1 class="mb-4">All Books in My Library</h1>
 <!-- Filter Section -->
-<div class="filter-section">
-  <form method="GET" class="row g-3 w-100" id="filter_form">
-    <div class="col-md-3">
-      <label for="search" class="form-label">Search</label>
-      <input type="text" class="form-control" id="search" name="search" 
-             value="{{ current_search }}" placeholder="Title, author, description...">
-    </div>
-    <div class="col-12 col-sm-6 col-lg-3">
-      <label for="category" class="form-label">Category</label>
-      <select class="form-select" id="category" name="category" multiple>
-        <option value="">All Categories</option>
-        {% for category in categories %}
-          <option value="{{ category }}" {% if category in current_category %}selected{% endif %}>
-            {{ category }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-3">
-      <label for="publisher" class="form-label">Publisher</label>
-      <select class="form-select" id="publisher" name="publisher" multiple>
-        <option value="">All Publishers</option>
-        {% for publisher in publishers %}
-          <option value="{{ publisher }}" {% if publisher in current_publisher %}selected{% endif %}>
-            {{ publisher }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-2">
-      <label for="language" class="form-label">Language</label>
-      <select class="form-select" id="language" name="language" multiple>
-        <option value="">All Languages</option>
-        {% for language in languages %}
-          <option value="{{ language }}" {% if language in current_language %}selected{% endif %}>
-            {{ language }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-2">
-      <label for="has_read" class="form-label">Finished?</label>
-      <input type="checkbox" class="form-input" id="has_read" name="has_read" {% if has_read == "on" %}checked{% endif %} />
-    </div>
-  </form>
-  <div class="mt-2 text-center w-100">
-    <button type="submit" class="btn btn-primary btn-sm me-2" form="filter_form">Filter</button> <!-- Blue Filter Button -->
-    <a href="{{ url_for('main.library') }}" class="btn btn-secondary btn-sm">Clear Filters</a> <!-- Gray Clear Filters Button -->
-    <span class="ms-3 text-muted">Showing {{ books|length }} book(s)</span>
-  </div>
-</div>
-<div class="bookshelf-bg">
-  <div class="bookshelf-row row">
-    {% for book in books %}
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-4">
-        <div class="book-card">
-          {% if book.cover_url %}
-            <img src="{{ book.cover_url }}" alt="cover" class="book-cover-shelf mx-auto d-block"
-           onerror="this.onerror=null;this.src='{{ url_for('static', filename='bookshelf.png') }}';">
-          {% else %}
-            <img src="{{ url_for('static', filename='bookshelf.png') }}" alt="cover" class="book-cover-shelf mx-auto d-block">
-          {% endif %}
-          <div class="book-title">
-            <a href="{{ url_for('main.view_book', uid=book.uid) }}">{{ book.title }}</a>
+<form method="GET" id="filter_form" autocomplete="off">
+
+  <div class="filter-section">
+    <div class="row g-3 w-100"><!--form method="GET" class="row g-3 w-100" id="filter_form"-->
+        <div class="col-md-3">
+          <label for="search" class="form-label">Search</label>
+          <input type="text" class="form-control" id="search" name="search" 
+                value="{{ current_search }}" placeholder="Title, author, description...">
+        </div>
+
+    <!-- Template for search selectors
+    <div class="col-12 col-sm-6 col-lg-3" id="div_____NAME_____select">
+        <div class="form-label">____NAME____</div>
+        <div id="div_____NAME_____selected_options">
+        </div>
+          <div id="div_____NAME_____select_area">
+          <div>
+            <input type=text autocomplete="off" class="form-control" placeholder="Select ____NAME____: Search" id="____NAME_____selection_search"/>
           </div>
-          <div class="book-author">
-            {{ book.author }}
+          <div class="div_checkboxes form-select" id="div_____NAME_____checkboxes">
+            {% for option in ____NAME____s %}
+            <label class="cat_selection_label" for="____NAME_____{{ option }}"><input type="checkbox" id="____NAME_____{{ option }}" name="____NAME____" value="{{ option }}" {% if option in current_____NAME____ %}checked{% endif %}/>{{ option }}</label>
+            {% endfor %}
           </div>
-          {% if book.categories %}
-            <div style="font-size:0.75em; color:#888; margin-bottom:4px; text-align:center;">
-              {% for category in book.categories.split(',')[:2] %}
-                <span class="badge bg-light text-dark me-1">{{ category.strip() }}</span>
+          </div>
+        </div>    
+        
+    -->
+        <div class="col-12 col-sm-6 col-lg-3" id="div_category_select">
+          <div class="form-label">Category</div>
+          <div id="div_category_selected_options">
+          </div>
+          <div id="div_category_select_area">
+            <div>
+              <input type=text autocomplete="off" class="form-control" placeholder="Select category: Search" id="category_selection_search"/>
+            </div>
+            <div class="div_checkboxes form-select" id="div_category_checkboxes">
+              {% for category in categories %}
+              <label class="cat_selection_label" for="category_{{ category }}"><input type="checkbox" id="category_{{ category }}" name="category" value="{{ category }}" {% if category in current_category %}checked{% endif %}/>{{ category }}</label>
               {% endfor %}
             </div>
-          {% endif %}
-          {% if book.average_rating %}
-            <div style="font-size:0.8em; color:#f39c12; margin-bottom:4px; text-align:center;">
-              ⭐ {{ "%.1f"|format(book.average_rating) }}
-              {% if book.rating_count %}({{ book.rating_count }}){% endif %}
-            </div>
-          {% endif %}
-          <div class="book-badges">
-            {% if book.want_to_read %}<span class="badge bg-info">Want to Read</span>{% endif %}
-            {% if not book.finish_date and not book.want_to_read and not book.library_only %}<span class="badge bg-warning">Currently Reading</span>{% endif %}
-            {% if book.finish_date %}<span class="badge bg-success">Finished</span>{% endif %}
-            {% if book.library_only %}<span class="badge bg-secondary">Library Only</span>{% endif %}
           </div>
         </div>
+
+        <div class="col-12 col-sm-6 col-lg-3" id="div_publisher_select">
+          <div class="form-label">publisher</div>
+          <div id="div_publisher_selected_options">
+          </div>
+          <div id="div_publisher_select_area">
+            <div>
+              <input type=text autocomplete="off" class="form-control" placeholder="Select publisher: Search" id="publisher_selection_search"/>
+            </div>
+            <div class="div_checkboxes form-select" id="div_publisher_checkboxes">
+              {% for option in publishers %}
+              <label class="cat_selection_label" for="publisher_{{ option }}"><input type="checkbox" id="publisher_{{ option }}" name="publisher" value="{{ option }}" {% if option in current_publisher %}checked{% endif %}/>{{ option }}</label>
+              {% endfor %}
+            </div>
+          </div>
+        </div> 
+
+        <div class="col-12 col-sm-6 col-lg-3" id="div_language_select">
+          <div class="form-label">language</div>
+          <div id="div_language_selected_options">
+          </div>
+          <div id="div_language_select_area">
+            <div>
+              <input type=text autocomplete="off" class="form-control" placeholder="Select language: Search" id="language_selection_search"/>
+            </div>
+            <div class="div_checkboxes form-select" id="div_language_checkboxes">
+              {% for option in languages %}
+              <label class="cat_selection_label" for="language_{{ option }}"><input type="checkbox" id="language_{{ option }}" name="language" value="{{ option }}" {% if option in current_language %}checked{% endif %}/>{{ option }}</label>
+              {% endfor %}
+            </div>
+          </div>
+        </div> 
+
+    <!-- End new select box-->
+
+    <!-- Old selection boxes
+        <div class="col-12 col-sm-6 col-lg-3">
+          <label for="publisher" class="form-label">Publisher</label>
+          <select class="form-select" id="publisher" name="publisher" multiple>
+            <option value="">All Publishers</option>
+            {% for publisher in publishers %}
+              <option value="{{ publisher }}" {% if publisher in current_publisher %}selected{% endif %}>
+                {{ publisher }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label for="language" class="form-label">Language</label>
+          <select class="form-select" id="language" name="language" multiple>
+            <option value="">All Languages</option>
+            {% for language in languages %}
+              <option value="{{ language }}" {% if language in current_language %}selected{% endif %}>
+                {{ language }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      -->    
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label for="has_read" class="form-label">Finished?</label>
+          <input type="checkbox" class="form-check" id="has_read" name="has_read" {% if has_read == "on" %}checked{% endif %} />
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label for="sort" class="form-label">Sort By: {{ sort_method }}</label>
+          <select class="form-select" id="sort" name="sort">
+            <option value="id.asc" {% if sort_method == "id.asc" %}selected="true"{% endif %}>Order Added</option>
+            <option value="title.asc" {% if sort_method == "title.asc" %}selected="true"{% endif %}>Title A-Z</option>
+            <option value="title.desc" {% if sort_method == "title.desc" %}selected="true"{% endif %}>Title Z-A</option>
+            <option value="author.asc" {% if sort_method == "author.asc" %}selected="true"{% endif %}>Author A-Z</option>
+            <option value="author.desc" {% if sort_method == "author.desc" %}selected="true"{% endif %}>Author Z-A</option>
+            <option value="start_date.asc" {% if sort_method == "start_date.asc" %}selected="true"{% endif %}>Start Date</option>
+            <option value="finish_date.asc" {% if sort_method == "finish_date.asc" %}selected="true"{% endif %}>Finish Date</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label for="bulk_edit_checkbox" class="form-label">Bulk Edit</label>
+          <input type="checkbox" class="form-check" id="bulk_edit_checkbox" name="bulk_edit" onchange="bulk_edit_mode(this)" {% if bulk_edit_mode == 'on' %}checked{% endif %}/>
+        </div>
+      
+      <div class="mt-2 text-center w-100">
+        <button type="submit" class="btn btn-primary btn-sm me-2" form="filter_form" name="btn_filter" value="btn_filter">Filter / Sort</button> <!-- Blue Filter Button -->
+        <a href="{{ url_for('main.library') }}" class="btn btn-secondary btn-sm">Clear Filters</a> <!-- Gray Clear Filters Button -->
+        <span class="ms-3 text-muted">Showing {{ books|length }} book(s)</span>
       </div>
-    {% else %}
-      <div class="text-center w-100">No books in your library.</div>
-    {% endfor %}
+    </div><!--/form-->
   </div>
-</div>
+
+
+  <div class="bulk-edit-section{% if bulk_edit_mode != 'on' %} hidden_class{% endif %}" id="bulk-edit-section">
+    <div class="row g-3 w-100">
+      <div class="col-12 col-sm-6 col-lg-2">
+            <label for="bulk-edit-select" class="form-label">Which Attribute to change</label>
+            <select class="form-select" name="bulk_edit_selection" id="bulk-edit-select">
+              <option value="">----</option>"
+              <option value="author">Author</option>
+              <option value="publisher">Publisher</option>
+              <option value="start_date">Start Date</option>
+              <option value="finish_date">Finish Date</option>
+              <option value="add_category">Add Category</option>
+              <option value="remove_category">Remove Category</option>
+              <option value="language">Language</option>
+              <option value="want_to_read">Want To Read</option>
+              <option value="library_only">Library Only</option>
+            </select>
+      </div>
+      <div id="bulk_edit_attribute" class="col-12 col-sm-6 col-lg-2">
+          <span></span>
+      </div>
+      <button type="Submit" class="btn btn-primary btn-sm me-2"form="filter_form" name="btn_bulk_edit" value="bulk_edit">Update</button>
+    </div>
+  </div>
+
+
+  <div class="bookshelf-bg">
+    <div class="bookshelf-row row">
+      {% for book in books %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-4">
+          <!--label class="bulk_edit_label book-card" for="checkbox_{{book.uid}}"-->
+            <div class="book-card">
+              <input type="checkbox" class="{% if bulk_edit_mode != 'on' %}hidden_class {% endif %}bulk_edit_checkbox" id="checkbox_{{book.uid}}" name="books" value="{{book.uid}}" {% if book.uid in selected_books %}checked{% endif %}>
+              {% if book.cover_url %}
+                <img src="{{ book.cover_url }}" alt="cover" class="book-cover-shelf mx-auto d-block"
+                onerror="this.onerror=null;this.src='{{ url_for('static', filename='bookshelf.png') }}';">
+              {% else %}
+                <img src="{{ url_for('static', filename='bookshelf.png') }}" alt="cover" class="book-cover-shelf mx-auto d-block">
+              {% endif %}
+              <div class="book-title">
+                <a href="{{ url_for('main.view_book', uid=book.uid) }}">{{ book.title }}</a>
+              </div>
+              <div class="book-author">
+                {{ book.author }}
+              </div>
+              {% if book.categories %}
+                <div style="font-size:0.75em; color:#888; margin-bottom:4px; text-align:center;">
+                  {% for category in book.categories.split(',')[:2] %}
+                    <span class="badge bg-light text-dark me-1">{{ category.strip() }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              {% if book.average_rating %}
+                <div style="font-size:0.8em; color:#f39c12; margin-bottom:4px; text-align:center;">
+                  ⭐ {{ "%.1f"|format(book.average_rating) }}
+                  {% if book.rating_count %}({{ book.rating_count }}){% endif %}
+                </div>
+              {% endif %}
+              <div class="book-badges">
+                {% if book.want_to_read %}<span class="badge bg-info">Want to Read</span>{% endif %}
+                {% if not book.finish_date and not book.want_to_read and not book.library_only %}<span class="badge bg-warning">Currently Reading</span>{% endif %}
+                {% if book.finish_date %}<span class="badge bg-success">Finished</span>{% endif %}
+                {% if book.library_only %}<span class="badge bg-secondary">Library Only</span>{% endif %}
+              </div>
+            </div>
+          <!--/label-->
+        </div>
+      {% else %}
+        <div class="text-center w-100">No books in your library.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+</form>
+<script src="{{ url_for('static', filename='selection_boxes.js') }}"></script>
+<script src="{{ url_for('static', filename='bulk_edit.js') }}"></script>
 {% endblock %}

@@ -7,6 +7,7 @@ import requests
 from io import BytesIO
 import pytz
 import csv # Ensure csv is imported
+import re
 
 app = Blueprint('app', __name__)
 bp = Blueprint('main', __name__)
@@ -146,6 +147,11 @@ def add_book():
 
             if not cover_url:
                 flash('Warning: No cover image found on Google Books for this ISBN. A default image will be used. A manual cover URL can be added in the "edit book" section.', 'warning')
+
+            cat_set = set()
+            cat_set.update([cat.strip().title() for cat in categories.split(",")])
+            cat_set.discard("")
+            categories = ", ".join(map(str, cat_set))
 
             book = Book(
                 title=title,
@@ -305,18 +311,28 @@ def library():
     language_filter = request.args.getlist('language')
     search_query = request.args.get('search', '')
     has_read_query = request.args.get('has_read','')
+    sort_method = request.args.get('sort','title.asc') #default sort order is by ID
+    selected_books = request.args.getlist('books')
+    bulk_edit_mode = request.args.get('bulk_edit','')
+    btn_bulk_edit = request.args.get('btn_bulk_edit','')
+    bulk_edit_attribute = request.args.get('bulk_edit_selection','')
+    bulk_edit_attribute_value = request.args.get('bulk_edit_attribute','')
+
     
+    if btn_bulk_edit == 'bulk_edit' and bulk_edit_attribute != '' and len(selected_books) >0:
+        bulk_edit_books(bulk_edit_attribute, bulk_edit_attribute_value, selected_books)
+
     books_query = Book.query
-    
+
     # Apply filters
-    if category_filter:
+    if category_filter and category_filter[0]!="":
         for category_filter_item in category_filter:
             books_query = books_query.filter(Book.categories.op('REGEXP')(f'(?:(?<=^)|(?<=,\s)){category_filter_item}(?:(?=$|,))'))
 
-    if publisher_filter:
+    if publisher_filter and publisher_filter[0]!="":
         for publisher_filter_item in publisher_filter:
             books_query = books_query.filter(Book.publisher.ilike(f'%{publisher_filter_item}%'))
-    if language_filter:
+    if language_filter and language_filter[0]!="":
         for language_filter_item in language_filter:
             books_query = books_query.filter(Book.language == language_filter_item)
     if search_query:
@@ -327,9 +343,14 @@ def library():
         )
     if has_read_query:
         books_query = books_query.filter(Book.finish_date.is_not(None))
-    
-    books = books_query.all()
-    
+
+    #Sort method.
+    sort_type = sort_method.split('.')
+    if sort_type[1] == 'asc':
+        books = books_query.order_by(getattr(Book,sort_type[0])).all()
+    else:
+        books = books_query.order_by(getattr(Book,sort_type[0]).desc()).all()
+
     # Get distinct values for filter dropdowns
     all_books = Book.query.all()
     categories = set()
@@ -343,7 +364,7 @@ def library():
             publishers.add(book.publisher)
         if book.language:
             languages.add(book.language)
-    
+
     return render_template(
         'library.html', 
         books=books,
@@ -353,8 +374,11 @@ def library():
         current_category=set(category_filter),
         current_publisher=set(publisher_filter),
         current_language=set(language_filter),
+        selected_books=set(selected_books),
         current_search=search_query,
-        has_read=has_read_query
+        has_read=has_read_query,
+	    sort_method = sort_method,
+        bulk_edit_mode = bulk_edit_mode
     )
 
 @bp.route('/public-library')
@@ -401,6 +425,7 @@ def edit_book(uid):
         if len(category_input)>0:
             cat_set = set()
             cat_set.update([cat.strip().title() for cat in request.form.get('categories', '').split(",")])
+            cat_set.discard("")
             book.categories = ", ".join(map(str, cat_set))
         else:
             book.categories = ""
@@ -637,3 +662,54 @@ def list_tasks():
     from .models import Task
     tasks = Task.query.order_by(Task.created_at.desc()).limit(20).all()
     return render_template('task_list.html', tasks=tasks)
+
+
+
+def bulk_edit_books(attribute,value,books):
+    try:
+        match attribute:
+            case "start_date":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): datetime.strptime(value, "%Y-%m-%d")}, synchronize_session=False)
+                db.session.commit()
+            case "finish_date":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): datetime.strptime(value, "%Y-%m-%d")}, synchronize_session=False)
+                db.session.commit()
+            case "author":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): value}, synchronize_session=False)
+                db.session.commit()
+            case "publisher":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): value}, synchronize_session=False)
+                db.session.commit()
+            case "language":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): value}, synchronize_session=False)
+                db.session.commit()
+            case "want_to_read":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): (1 if value=="on" else 0)}, synchronize_session=False)
+                db.session.commit()
+                print(value)
+            case "library_only":
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): (True if value=="on" else False)}, synchronize_session=False)
+                db.session.commit()
+                print(value)
+            case "add_category":
+                #get each book individually
+                # convert it's category to a set
+                #update with new value
+                #save book
+                for uid in books:
+                    book = Book.query.filter_by(uid=uid).first_or_404()
+                    cat_set = set()
+                    categories = book.categories + "," + value
+                    cat_set.update([cat.strip().title() for cat in categories.split(",")])
+                    cat_set.discard("")
+                    book.categories = ", ".join(map(str, cat_set))
+                    db.session.commit()
+            case "remove_category":
+                for uid in books:
+                    book = Book.query.filter_by(uid=uid).first_or_404()
+                    book.categories=book.categories(", "+value+",",",")
+                    book.categories=re.sub(f"(?:(?<=^)|(?<=,\s)){value}(?:(?=$|,))","",book.categories)
+                    book.categories=re.sub("(^,\s)|(,\s$)|(,\s,)","",book.categories)
+                    db.session.commit()            
+    except:
+        pass

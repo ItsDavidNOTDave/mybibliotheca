@@ -282,6 +282,8 @@ def run_bulk_import_task(app, task_id, csv_content, file_format='isbn_only'):
             error_count = 0
             
             for i, row in enumerate(all_rows, 1):
+                for cell in row:
+                    print(cell)
                 if not row or not row[0].strip():
                     continue
                 
