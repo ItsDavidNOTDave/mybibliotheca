@@ -3,11 +3,17 @@
 {% block content %}
 <h1>{{ book.title }}</h1>
 {% if book.cover_url %}
-  <img src="{{ book.cover_url }}" alt="Book Cover" class="book-cover mb-3"
-       onerror="this.onerror=null;this.src='{{ url_for('static', filename='book_cover.png') }}';">
+  {% if book.cover_url.startswith("http") %}
+    {% set cover_src = book.cover_url %}
+  {% else %}
+    {% set cover_src = url_for('static', filename='book_covers/' ~ book.cover_url) %}
+  {% endif %}
 {% else %}
-  <img src="{{ url_for('static', filename='book_cover.png') }}" alt="Book Cover" class="book-cover mb-3">
-{% endif %}
+    {% set cover_src = url_for('static', filename='book_cover.png') %}
+{% endif %} 
+<img src="{{ cover_src }}" alt="Book Cover" class="book-cover mb-3"
+       onerror="this.onerror=null;this.src='{{ url_for('static', filename='book_cover.png') }}';">
+
 <div class="row">
   <div class="col-md-6">
     <p><strong>Author:</strong> {{ book.author }}</p>

@@ -4,6 +4,7 @@ from .utils import fetch_book_data, get_reading_streak, get_google_books_cover, 
 from datetime import datetime, date
 import secrets
 import requests
+import os
 from io import BytesIO
 import pytz
 import csv # Ensure csv is imported
@@ -213,6 +214,10 @@ def delete_book(uid):
     ReadingLog.query.filter_by(book_id=book.id).delete()
     db.session.delete(book)
     db.session.commit()
+    try:
+        os.remove(f"app{ url_for('static', filename='book_covers/' + book.cover_url) }")
+    except:
+        pass
     flash('Book deleted successfully.')
     return redirect(url_for('main.index'))
 
@@ -413,7 +418,19 @@ def edit_book(uid):
         book.author = request.form['author']
         book.isbn = new_isbn
         cover_url = request.form.get('cover_url', '').strip()
-        book.cover_url = cover_url if cover_url else None
+        if cover_url.startswith("http"):
+            try:
+                r = requests.get(cover_url, stream=True)
+                ext = r.headers['content-type'].split('/')[-1] # converts response headers mime type to an extension (may not work with everything)
+                filename = f"{uid}.{ext}"
+                with open(f"app/static/book_covers/{filename}", 'wb') as f: # open the file to write as binary - replace 'wb' with 'w' for text files
+                    for chunk in r.iter_content(1024*100): # iterate on stream using 100KB packets
+                        f.write(chunk) # write the file
+                book.cover_url = filename
+            except:
+                book.cover_url = cover_url
+        else:
+            book.cover_url = None
         
         # Update new metadata fields
         book.description = request.form.get('description', '').strip() or None

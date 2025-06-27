@@ -283,11 +283,17 @@
             <div class="book-card">
               <input type="checkbox" class="{% if bulk_edit_mode != 'on' %}hidden_class {% endif %}bulk_edit_checkbox" id="checkbox_{{book.uid}}" name="books" value="{{book.uid}}" {% if book.uid in selected_books %}checked{% endif %}>
               {% if book.cover_url %}
-                <img src="{{ book.cover_url }}" alt="cover" class="book-cover-shelf mx-auto d-block"
-                onerror="this.onerror=null;this.src='{{ url_for('static', filename='bookshelf.png') }}';">
+                {% if book.cover_url.startswith("http") %}
+                  {% set cover_src = book.cover_url %}
+                {% else %}
+                  {% set cover_src = url_for('static', filename='book_covers/' ~ book.cover_url) %}
+                {% endif %}
               {% else %}
-                <img src="{{ url_for('static', filename='bookshelf.png') }}" alt="cover" class="book-cover-shelf mx-auto d-block">
+                  {% set cover_src = url_for('static', filename='bookshelf.png') %}
               {% endif %}
+                  <img src="{{ cover_src }}" alt="cover"
+                   class="book-cover-shelf mx-auto d-block"
+                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='bookshelf.png') }}';">
               <div class="book-title">
                 <a href="{{ url_for('main.view_book', uid=book.uid) }}">{{ book.title }}</a>
               </div>

@@ -197,5 +197,10 @@ cython_debug/
 
 # Local book database file
 books.db
+books.db.bak*
 books.db-shm
 books.db-wal
+
+
+#book covers
+app/static/book_covers/

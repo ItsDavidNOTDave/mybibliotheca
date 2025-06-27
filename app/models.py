@@ -2,6 +2,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 import secrets
 import json
+import requests
 
 db = SQLAlchemy()
 
@@ -124,12 +125,23 @@ class Book(db.Model):
         if type(self.categories) is str:
             cat_set = set()
             cat_set.update([cat.strip().title() for cat in self.categories.split(',')])
-            print(type(self), self)
-            print(type(self.categories),self.categories)
             self.categories=", ".join(map(str, cat_set))
-            print(type(self.categories),self.categories)
         db.session.add(self)
         db.session.commit()
+        if type(self.cover_url) is str:
+            if self.cover_url.startswith("http"):
+                try:
+                    db.session.refresh(self)
+                    r = requests.get(self.cover_url, stream=True)
+                    ext = r.headers['content-type'].split('/')[-1] # converts response headers mime type to an extension (may not work with everything)
+                    filename = f"{self.uid}.{ext}"
+                    with open(f"app/static/book_covers/{filename}", 'wb') as f: # open the file to write as binary - replace 'wb' with 'w' for text files
+                        for chunk in r.iter_content(1024*100): # iterate on stream using 100KB packets
+                            f.write(chunk) # write the file
+                    self.cover_url = filename
+                    db.session.commit()
+                except:
+                    pass
 
     @classmethod
     def get_all_books(cls):
