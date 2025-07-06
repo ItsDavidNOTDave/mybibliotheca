@@ -204,3 +204,4 @@ books.db-wal
 
 #book covers
 app/static/book_covers/
+!app/static/book_covers/README

@@ -340,7 +340,7 @@ def library():
     # Apply filters
     if category_filter and category_filter[0]!="":
         for category_filter_item in category_filter:
-            books_query = books_query.filter(Book.categories.op('REGEXP')(f'(?:(?<=^)|(?<=,\s)){category_filter_item}(?:(?=$|,))'))
+            books_query = books_query.filter(Book.categories.op('REGEXP')(f'(?:(?<=^)|(?<=,\\s)){category_filter_item}(?:(?=$|,))'))
 
     if publisher_filter and publisher_filter[0]!="":
         for publisher_filter_item in publisher_filter:
@@ -735,8 +735,8 @@ def bulk_edit_books(attribute,value,books):
                 for uid in books:
                     book = Book.query.filter_by(uid=uid).first_or_404()
                     book.categories=book.categories(", "+value+",",",")
-                    book.categories=re.sub(f"(?:(?<=^)|(?<=,\s)){value}(?:(?=$|,))","",book.categories)
-                    book.categories=re.sub("(^,\s)|(,\s$)|(,\s,)","",book.categories)
+                    book.categories=re.sub(f"(?:(?<=^)|(?<=,\\s)){value}(?:(?=$|,))","",book.categories)
+                    book.categories=re.sub("(^,\\s)|(,\\s$)|(,\\s,)","",book.categories)
                     db.session.commit()            
     except:
         pass
