@@ -115,6 +115,7 @@ def add_book():
             finish_date_str = request.form.get('finish_date') or None
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
             finish_date = datetime.strptime(finish_date_str, '%Y-%m-%d').date() if finish_date_str else None
+            input_categories = request.form.get('categories') or None
             want_to_read = 'want_to_read' in request.form
             library_only = 'library_only' in request.form
 
@@ -148,7 +149,14 @@ def add_book():
 
             if not cover_url:
                 flash('Warning: No cover image found on Google Books for this ISBN. A default image will be used. A manual cover URL can be added in the "edit book" section.', 'warning')
-
+#if categories is string and input_categories is a string, combine
+#if categories is string and not input categories, then nothing
+#if not input categories and input_categories, then set categories to input categories
+            if type(input_categories) == str:
+                if type(categories) == str:
+                    categories = categories + ", " + input_categories
+                else:
+                    categories = input_categories
             cat_set = set()
             cat_set.update([cat.strip().title() for cat in categories.split(",")])
             cat_set.discard("")
@@ -690,6 +698,8 @@ def bulk_edit_books(attribute,value,books):
                 db.session.commit()
             case "finish_date":
                 Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): datetime.strptime(value, "%Y-%m-%d")}, synchronize_session=False)
+                db.session.commit()
+                Book.query.filter(Book.uid.in_(books)).update({getattr(Book,"want_to_read"): 0}, synchronize_session=False)
                 db.session.commit()
             case "author":
                 Book.query.filter(Book.uid.in_(books)).update({getattr(Book,attribute): value}, synchronize_session=False)

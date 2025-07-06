@@ -18,6 +18,12 @@ function bulk_edit_mode(element){
           }
 }
 
+function Select_All_books(){
+  $('.bulk_edit_checkbox').each(function(){
+    $(this).prop('checked', true);
+  });
+}
+
 document.getElementById('bulk-edit-select').addEventListener('change',function(){
   const bulk_edit_attribute_div = document.getElementById("bulk_edit_attribute");
     var textbox = ['author','publisher','add_category','language'];

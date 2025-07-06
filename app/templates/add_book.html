@@ -24,6 +24,7 @@
   <button name="fetch" value="1" type="submit" class="btn btn-secondary">Fetch Book Data</button><br>
   Title: <input id="title" name="title" value="{{ book_data.title if book_data else request.form.title or '' }}"><br>
   Author: <input name="author" value="{{ book_data.author if book_data else request.form.author or '' }}"><br>
+  Categories: <input name="categories" class="form-control" value="{{ book_data.categories if book_data else request.form.author or '' }}"><br>
   Start Date: <input name="start_date" type="date"><br>
   Finish Date: <input name="finish_date" type="date"><br>
 

@@ -251,7 +251,11 @@
 
 
   <div class="bulk-edit-section{% if bulk_edit_mode != 'on' %} hidden_class{% endif %}" id="bulk-edit-section">
+    
     <div class="row g-3 w-100">
+      <div class="col-12 col-sm-6 col-lg-2">
+        <input type="button" class="btn btn-primary btn-sm me-2" name="btn_bulk_edit_all" onclick="Select_All_books()" value="Select All" />
+      </div>
       <div class="col-12 col-sm-6 col-lg-2">
             <label for="bulk-edit-select" class="form-label">Which Attribute to change</label>
             <select class="form-select" name="bulk_edit_selection" id="bulk-edit-select">
