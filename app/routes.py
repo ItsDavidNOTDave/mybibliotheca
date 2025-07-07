@@ -734,9 +734,13 @@ def bulk_edit_books(attribute,value,books):
             case "remove_category":
                 for uid in books:
                     book = Book.query.filter_by(uid=uid).first_or_404()
-                    book.categories=book.categories(", "+value+",",",")
+                    print(f"Line 737: Has: {book.categories}")
+                    book.categories=book.categories.replace(", "+value+",",",")
+                    print(f"Line 739: Has: {book.categories}")
                     book.categories=re.sub(f"(?:(?<=^)|(?<=,\\s)){value}(?:(?=$|,))","",book.categories)
+                    print(f"Line 741: Has: {book.categories}")
                     book.categories=re.sub("(^,\\s)|(,\\s$)|(,\\s,)","",book.categories)
+                    print(f"Line 743: Has: {book.categories}")
                     db.session.commit()            
     except:
         pass
