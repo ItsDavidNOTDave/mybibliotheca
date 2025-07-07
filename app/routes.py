@@ -438,7 +438,7 @@ def edit_book(uid):
             except:
                 book.cover_url = cover_url
         else:
-            book.cover_url = None
+            book.cover_url = cover_url
         
         # Update new metadata fields
         book.description = request.form.get('description', '').strip() or None
